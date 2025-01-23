@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Teórico Clase B</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #e3f2fd;
+            color: #333;
+            font-size: 18px;
+        }
+        .question-container {
+            margin: 20px 0;
+        }
+        .question-image img {
+            width: 100%;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .options button.selected {
+            background: #007bff;
+            color: #fff;
+        }
+        .options button:hover {
+            background: #e0e0e0;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .footer button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            background: #007bff;
+        }
+        .footer button:hover {
+            background: #0056b3;
+        }
+        .timer {
+            font-size: 16px;
+            color: #007bff;
+        }
+        .progress {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="progress">Pregunta <span id="current-question">1</span> / <span id="total-questions">3</span></div>
+            <div class="timer">Tiempo restante: <span id="time-remaining">45:00</span></div>
+        </div>
+        <div class="question-container">
+            <div class="question-image">
+                <img id="question-image" src="https://via.placeholder.com/800x400" alt="Imagen de pregunta">
+            </div>
+            <div class="question-text" id="question-text">¿Qué debe hacer un conductor al llegar a un paso peatonal?</div>
+            <div class="options" id="options">
+                <!-- Opciones serán generadas dinámicamente -->
+            </div>
+        </div>
+        <div class="footer">
+            <button id="prev-btn" disabled>Anterior</button>
+            <button id="next-btn" disabled>Siguiente</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "¿Qué indica esta señal de tránsito?",
+                image: "foto-señaldevelociadda.jpg", // Reemplaza con la URL o ruta local de la imagen
+                options: [
+                    "A) Prohibición de adelantar",
+                    "B) Límite máximo de velocidad de 30 km/h",
+                    "C) Restricción para vehículos de carga",
+                    "D) Solo peatones permitidos"
+                ],
+                correct: 1
+            },
+            {
+                text: "¿Qué significa una señal de tránsito con un círculo rojo y un número en el interior?",
+                image: "foto-señaldevelociadda.jpg",
+                options: [
+                    "A) Prohibición de girar",
+                    "B) Límite máximo de velocidad",
+                    "C) Límite mínimo de velocidad",
+                    "D) Kilómetro de carretera"
+                ],
+                correct: 1
+            },
+            {
+                text: "¿Cuál es la función principal del cinturón de seguridad?",
+                image: "foto-señaldevelociadda.jpg",
+                options: [
+                    "A) Mejorar la comodidad",
+                    "B) Reducir las lesiones en caso de accidente",
+                    "C) Evitar multas",
+                    "D) Sujetar objetos"
+                ],
+                correct: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalTime = 45 * 60; // Tiempo en segundos
+        const totalQuestions = questions.length;
+        const answers = Array(totalQuestions).fill(null); // Guardar respuestas seleccionadas
+
+        const questionTextEl = document.getElementById("question-text");
+        const questionImageEl = document.getElementById("question-image");
+        const optionsEl = document.getElementById("options");
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const currentQuestionEl = document.getElementById("current-question");
+        const totalQuestionsEl = document.getElementById("total-questions");
+        const timeRemainingEl = document.getElementById("time-remaining");
+
+        totalQuestionsEl.textContent = totalQuestions;
+
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            questionTextEl.textContent = question.text;
+            questionImageEl.src = question.image; // Cambiar la imagen
+            optionsEl.innerHTML = "";
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.classList.remove("selected");
+                if (answers[currentQuestionIndex] === index) {
+                    button.classList.add("selected");
+                }
+                button.onclick = () => selectAnswer(button, index);
+                optionsEl.appendChild(button);
+            });
+
+            currentQuestionEl.textContent = currentQuestionIndex + 1;
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = answers[currentQuestionIndex] === null;
+            nextBtn.textContent = currentQuestionIndex === totalQuestions - 1 ? "Finalizar" : "Siguiente";
+        }
+
+        function selectAnswer(button, index) {
+            const buttons = optionsEl.querySelectorAll("button");
+            buttons.forEach(btn => btn.classList.remove("selected"));
+            button.classList.add("selected");
+            answers[currentQuestionIndex] = index; // Guardar la respuesta seleccionada
+            nextBtn.disabled = false;
+        }
+
+        function calculateScore() {
+            score = answers.reduce((total, answer, index) => {
+                return total + (answer === questions[index].correct ? 1 : 0);
+            }, 0);
+        }
+
+        function finalizeTest() {
+            calculateScore();
+            alert(`¡Test finalizado! Tu puntaje final es ${score} de ${totalQuestions}.`);
+        }
+
+        prevBtn.onclick = () => {
+            currentQuestionIndex--;
+            showQuestion();
+        };
+
+        nextBtn.onclick = () => {
+            if (currentQuestionIndex < totalQuestions - 1) {
+                currentQuestionIndex++;
+                showQuestion();
+            } else {
+                finalizeTest();
+            }
+        };
+
+        function startTimer() {
+            const timer = setInterval(() => {
+                if (totalTime <= 0) {
+                    finalizeTest();
+                } else {
+                    totalTime--;
+                    const minutes = Math.floor(totalTime / 60);
+                    const seconds = totalTime % 60;
+                    timeRemainingEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        showQuestion();
+        startTimer();
+    </script>
+</body>
+</html>
